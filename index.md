@@ -439,7 +439,7 @@ events.raise "event name" (list, of, arguments) "result var to store result"; #R
 #### FileIO
 The FileIO plugin allows you to access files on a storage system (e.g. hard disk, USB drive, ...). 
 ```
-fopen("file name", "var name to store handle", shall_append) { code to execute }; #Opens a file and optionally executes the code that handles the file operation
+fopen("var name to store handle", "file name", shall_append) { code to execute }; #Opens a file and optionally executes the code that handles the file operation
 
 fisopen "file handle" "result var"; #Indicates if a file has been opened
 
