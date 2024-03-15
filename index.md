@@ -18,14 +18,48 @@ The shell can be used either in interactive mode or just as a host for running
 DNYS script files. The functionality of the shell can be extended via native
 DLL plugins.
 
+### Example code
+```
+# Example script code
+# Demonstrate recursive function calls
+
+const MAX_COUNT int <= 10;
+
+function recursive void(count int)
+{
+  if (%count, -ls, %MAX_COUNT) {
+    ++ count;
+    print "Count value: %count";
+    call recursive(%count) => void;
+  };
+};
+
+call recursive(0) => void;
+
+print "Done.";
+
+pause;
+```
+
 ### Basic commands:
 * require (library) # Attempts to load a plugin library. Only needed when not running in interactive mode
-* exec (scriptfile) # Executes a script file
+* exec (scriptfile) (opt:args) # Executes a script file. In the script use %argc for the argument count and %argv[n] for the actual argument value. Using %n, where n is the argument index value, is also possible.
 * sys (string) (opt:storage var) # Attempts to run the expression as a windows command. If a result var is provided the output is stored in it, else the output gets echoed.
-* run (file) (args) (dir) # Attempts to launch a specified file 
+* run (file) (args) (dir) # Attempts to launch a specified file
+* cwd (dir) # Changes the current working directory
 * pause # Pause current script execution
 * listlibs # Lists all shell plugin libraries
 * quit # Exists the shell
+
+### Helper constants and variables
+* DNYAS_IS_INTERACTIVE_MODE: Boolean value that indicates whether or not the current script code runs within the interactive mode
+* CR: Represents a carriage return character
+* LF: Represents a line feed character
+* void: Can be used with commands or functions if you want to dismiss the result value.
+
+### Helper commands:
+* getscriptpath (result) # Stores the full path of the current executed script in the result var
+* getscriptname (result) # Stores the full file name of the current executed script in the result var
 
 ### Multiline support:
 * \< # Opens the editor in multiline mode
@@ -39,17 +73,45 @@ DLL plugins.
 * You can place a script named 'unload.dnys' in the 'scripts' directory of the base directory
   which will get executed when the shell gets unloaded. There you can place cleanup code
 
+### Command line arguments
+
+The following command line arguments exist:
+
+* "-v": Prints out the version information
+* "add_path" "-u|-m": Adds the shell path to your PATH environment variable. Use -u for current user or -m for local machine.
+* "path/to/a/script.dnys": If the argument is an existing script file, then the shell will try to execute it.
+
+If you have added the shell path to your environment PATH variable, then you can also execute scripts as follows:
+```
+aquashell path/to/script.dnys arg1 arg2 arg3 ... argN
+```
+
 ### Plugin API:
-* Plugins must be written in C++
-* A plugin needs to export the functions 'dnyAS_PluginLoad' and 'dnyAS_PluginUnload'
-* The first one is called when the plugin gets loaded. There you must implement all
-  loading stuff. The function recieves the current shell interface version, a pointer
-  to the plugin API class instance and a pointer to a plugin information structure
-  where the plugin should save its information strings. If everything goes well then
-  the plugin must return true, otherwise false.
-* The latter one is called when the plugin gets unloaded. There you can implement
-  all cleanup stuff. 
-* Please refer to the demo plugin sourcecode in order to view a full documented example
+Plugins must be written in compatibility with the shell application. 
+
+A plugin needs to export the functions `dnyAS_PluginLoad` and `dnyAS_PluginUnload`.
+
+```cpp
+bool dnyAS_PluginLoad(dnyVersionInfo version, IShellPluginAPI* pInterfaceData, plugininfo_s* pPluginInfos);
+void dnyAS_PluginUnload(void);
+```
+The first one is called when the plugin gets loaded. There you must implement all loading stuff. The function recieves the current shell interface version, a pointer to the plugin API class instance and a pointer to a plugin information structure where the plugin should save its information strings. If everything goes well then the plugin must return true, otherwise false.
+
+Here is an example of a plugin info struct object.
+
+```cpp
+plugininfo_s g_sPluginInfos = {
+	L"Plugin name",
+	L"1.0",
+	L"Author name",
+	L"Contact info",
+	L"Plugin description"
+};
+```
+
+The latter one is called when the plugin gets unloaded. There you can implement all cleanup stuff. 
+
+Please refer to the demo plugin sourcecode in order to view a full documented example.
 
 ## Scripting
 
@@ -324,19 +386,31 @@ sys "pause"; #Runs the pause command of the Windows console subsystem
 #### run
 This command launches a file. How the file is launched is determined by the Windows system settings
 ```
-run "path/to/file" "args to file" "directory to be run in"
+run "path/to/file" "args to file" "directory to be run in";
+```
+
+#### cwd
+This commands changes the current working directory. Useful when you are in interactive mode and want to change the directory.
+```
+cwd "path/to/directory";
+```
+
+#### pause
+Pauses the current script execution and waits for any key to be pressed
+```
+pause;
 ```
 
 #### listlibs
 Useful in interactive mode. Lists all loaded plugins
 ```
-listlibs
+listlibs;
 ```
 
 #### quit
 Useful in interactive mode. Quits the shell
 ```
-quit
+quit;
 ```
 
 ### Plugin commands
@@ -620,8 +694,6 @@ clpb_getstring "result var"; #Writes the contents of the clipboard (if it is tex
 clpb_clear; #Clears the clipboard content
 
 gettickcount "result var"; #Gets the system tick count and writes it to the given result variable
-
-fmtdatetime "format" "result var"; #Creates date and time info from the format string and writes it into the result variable
 ```
 
 #### NetClient
@@ -702,6 +774,24 @@ s_rtrim "string variable"; #Performs a right-trim operation on that variable
 s_ltrim "string variable"; #Performs a left-trim operation on that variable
 
 s_fmtescseq "string token" "result var"; #Writes the actual Unicode character in hexadecimal representation of the token to the result var. Example: "\53BD;" would convert the hexadecimal representation as character and store it
+```
+
+#### DateTime
+This plugin provides some date and time handling commands
+```
+timestamp "result int var"; # Stores the current system timestamp into the result var
+
+fmtdatetime "format string" "opt:timestamp" "result string var"; Creates a formatted datetime string and stores it into the result var. Optionally you can provide a timestamp to perform the operation on.
+```
+
+#### IRC
+This plugin provides commands in order to connect and communicate with an IRC server
+```
+irc_spawn "identifier" "host" "port" "result var"; # Attempts to connect to an IRC server
+irc_isvalid "identifier" "boolean result var"; # Indicates whether the identifier is linked to a valid (and connected) IRC object instance
+irc_process "opt:identifier"; # Processes the IRC object. If no identifier is specified then it processes all existing IRC objects. 
+irc_send "identifier" "message"; # Attempts to send a message to the server associated with the given object instance
+irc_release "identifier"; # Releases the IRC object instance which results in closing the connection.
 ```
 
 #### TextInput
