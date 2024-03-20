@@ -1,6 +1,6 @@
 # Documentation
 
-Welcome to the official AquaShell Scripting documentation. AquaShell is a scripting shell based on the dnyScript scripting language. AquaShell offers the possibility to automate tasks on Windows systems and runs on Windows 7/8/10/11 (x64 platform).
+Welcome to the official AquaShell Scripting documentation. AquaShell is a scripting shell based on the dnyScript scripting language. The shell allows you to both create automation tasks as well as develop complex scripts applications.
 
 In order to make a build get the source here: https://github.com/danielbrendel/dnyAquaShell
 
