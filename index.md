@@ -4,7 +4,7 @@ Welcome to the official AquaShell Scripting documentation. AquaShell is a script
 
 In order to make a build get the source here: https://github.com/danielbrendel/dnyAquaShell
 
-If you are using Notepad++, you can get the syntax highlighting definition file <a href="res/dnyScript_npp_highlighting.xml">here</a>.
+Syntax highlighting is available for both <a href="https://marketplace.visualstudio.com/items?itemName=danielbrendel.dnyscript-syntax">Visual Studio Code</a> and <a href="res/dnyScript_npp_highlighting.xml">Notepad++</a>.
 
 Table of contents:
 - [Shell documentation](#shell)
