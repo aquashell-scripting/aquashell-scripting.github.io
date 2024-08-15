@@ -13,10 +13,10 @@ Syntax highlighting is available for both <a href="https://marketplace.visualstu
 
 ## Shell
 
-This tool is an extendable scripting shell for Windows using dnyScriptInterpreter.
+This product is an extendable scripting shell for Windows using dnyScriptInterpreter.
 The shell can be used either in interactive mode or just as a host for running
-DNYS script files. The functionality of the shell can be extended via native
-DLL plugins.
+dnyScript script files. The functionality of the shell can be extended via native
+DLL plugins. There are also useful command line options available.
 
 ### Example code
 ```
