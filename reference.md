@@ -57,6 +57,12 @@ This command stores the full path including the script file name
 getscriptname "result var";
 ```
 
+### debug
+Prints debug text content using OutputDebugString
+```aquashell
+debug "Debug text";
+```
+
 ### textview
 This commands prints the text contents of a file to the current output
 ```aquashell
@@ -109,6 +115,18 @@ getsystemerror "result var";
 Sets the current system error number
 ```aquashell
 setsystemerror "number";
+```
+
+### threadfunc
+Executes a function in a separate thread. Optionally an array of arguments can be passed
+```aquashell
+threadfunc "FunctionName" (opt:list of args);
+```
+
+### hideconsole
+Hides the console window for the rest of the execution. Should only be used in scripts that don't need a console window
+```aquashell
+hideconsole;
 ```
 
 ### pause
@@ -393,6 +411,8 @@ wnd_getimageboximage "form handle" "imagebox name" "result var"; #Stores the cur
 wnd_isformvalid "form handle" "result var"; #Indicates if the specified form is valid
 
 wnd_process; #Processes all window events. Should be called in a main loop
+
+wnd_getcurrentfocus "result var"; Get window handle of window or control that currently has focus
 
 wnd_freeform "form handle"; #Frees the form and all attached controls
 ```

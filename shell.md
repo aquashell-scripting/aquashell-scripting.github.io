@@ -51,8 +51,9 @@ pause;
 * void: Can be used with commands or functions if you want to dismiss the result value.
 
 ## Helper commands:
-* getscriptpath (result) # Stores the full path of the current executed script in the result var
-* getscriptname (result) # Stores the full file name of the current executed script in the result var
+* getscriptpath (result var) # Stores the full path of the current executed script in the result var
+* getscriptname (result var) # Stores the full file name of the current executed script in the result var
+* debug (text content) # Prints a system debug message
 * textview (file) # Prints the text contents of the file to the standard output
 * random (start) (end) (result var) # Generates a random number within the range and stores it to the result var
 * sleep (milliseconds) # Pauses the main thread for N milliseconds
@@ -62,6 +63,8 @@ pause;
 * fmtdatetime (format string) (opt:timestamp) (result var) # Creates a formatted datetime string and stores it into the result var
 * getsystemerror (result var) # Stores the last system error code of the shell process context into the result var
 * setsystemerror (code) # Sets the last system error code of the shell process context
+* threadfunc (function name) (opt:args) # Executes a function in a separate thread. Optionally an array of arguments can be passed
+* hideconsole # Hides the console window for the rest of the execution. Should only be used in scripts that don't need a console window
 
 ## Multiline support:
 * \< # Opens the editor in multiline mode
