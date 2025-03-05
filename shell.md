@@ -35,9 +35,19 @@ pause;
 * quit # Exists the shell
 
 ## Helper constants and variables
+* DNYAS_SHELL_VERSION: Contains the current product version as string
+* DNYAS_SHELL_VERNUM: Contains the current product version as a numeric value, in a concatenated manner
+* DNYAS_PLATFORM_NAME: The platform name of the product build, either x64 or x86
+* DNYAS_BUILD_TYPE: The build type of the product, either Release or Debug
 * DNYAS_IS_INTERACTIVE_MODE: Boolean value that indicates whether or not the current script code runs within the interactive mode
+* DNYAS_BASE_PATH: Contains the base path of the shell
+* DNYAS_PLUGIN_PATH: Contains the path to the plugin directory
+* DNYAS_DEFSCRIPTS_PATH: Contains the path to the default scripts directory
 * CR: Represents a carriage return character
 * LF: Represents a line feed character
+* TAB: Represents a tab character
+* QUOT_SINGLE: Represents a single quotation character
+* QUOT_DOUBLE: Represents a double quotation character
 * void: Can be used with commands or functions if you want to dismiss the result value.
 
 ## Helper commands:
@@ -46,7 +56,10 @@ pause;
 * textview (file) # Prints the text contents of the file to the standard output
 * random (start) (end) (result var) # Generates a random number within the range and stores it to the result var
 * sleep (milliseconds) # Pauses the main thread for N milliseconds
+* bitop (operation) (array of operands) (result var) # Performs either a bitwise OR, AND or XOR operation and stores it to the result var
 * gettickcount (result var) # Stores the number  of milliseconds that have elapsed since system start into the result var
+* timestamp (result var) # Stores the current system timestamp into the result var
+* fmtdatetime (format string) (opt:timestamp) (result var) # Creates a formatted datetime string and stores it into the result var
 * getsystemerror (result var) # Stores the last system error code of the shell process context into the result var
 * setsystemerror (code) # Sets the last system error code of the shell process context
 
@@ -62,36 +75,104 @@ pause;
 * You can place a script named 'unload.dnys' in the 'scripts' directory of the base directory
   which will get executed when the shell gets unloaded. There you can place cleanup code
 
+## Executing script files
+
+Script files can be executed by running
+
+```
+dnyAquaShell.exe "path/to/a/script.dnys" [opt:args]
+```
+
+Arguments are optional, but can be provided if required.
+
+```
+dnyAquaShell.exe "path/to/a/script.dnys" "A string with multiple words" 1234 false true 5.23
+```
+
+In the context of a script, you can access the actual expressions as well as the argument count as follows:
+
+```
+%argc: Amount of arguments
+%argv[num]: Actual argument expression
+```
+
+If you have added the shell path to your environment PATH variable, then you can also perform actions from any directory as follows:
+```
+aquashell [args]
+```
+
 ## Command line arguments
 
 The following command line arguments exist:
 
 * -v: Prints out the version information
-* -e "path/to/a/script.dnys" [opt:args]: If an existing script file is provided, then the shell will try to execute it.
-* -c "script code": Execute script code that is provided as an argument.
+* -c "script code": Execute script code that is provided as an argument
+* -libs: Lists all available plugins
+* -path user|machine: Adds the shell path to your PATH environment variable, either for current user or local machine
 
-You can also add the shell path to your PATH environment variable using the following command line system command:
-* "add_path" "-u|-m": Adds the shell path to your PATH environment variable. Use -u for current user or -m for local machine.
+You can run them via
 
-If you have added the shell path to your environment PATH variable, then you can also perform actions as follows:
 ```
-aquashell [args]
+dnyAquaShell.exe -[cmd] [opt:args]
 ```
 
 ## Plugin API:
 Plugins must be written in compatibility with the shell application. 
 
-A plugin needs to export the functions <strong>dnyAS_PluginLoad</strong> and <strong>dnyAS_PluginUnload</strong>.
+A plugin needs to export the functions `dnyAS_PluginLoad` and `dnyAS_PluginUnload`.
 
 ```cpp
 bool dnyAS_PluginLoad(dnyVersionInfo version, IShellPluginAPI* pInterfaceData, plugininfo_s* pPluginInfos);
 void dnyAS_PluginUnload(void);
 ```
-The first one is called when the plugin gets loaded. There you must implement all loading stuff. The function recieves the current shell interface version, a pointer to the plugin API class instance and a pointer to a plugin information structure where the plugin should save its information strings. If everything goes well then the plugin must return true, otherwise false.
-
-Here is an example of a plugin info struct object.
+The `dnyAS_PluginLoad` function is called when the plugin gets loaded. The function recieves the current shell interface version, a pointer to the plugin API class instance and a pointer to a plugin information structure where the plugin stores its information data. The function must return true on success, otherwise it must return false.
 
 ```cpp
+IShellPluginAPI* g_pShellPluginAPI;
+
+//Example void-command interface
+class IExampleVoidCommandInterface : public IVoidCommandInterface {
+public:
+	IExampleVoidCommandInterface() {}
+
+	virtual bool CommandCallback(void* pCodeContext, void* pInterfaceObject)
+	{
+		ICodeContext* pContext = (ICodeContext*)pCodeContext;
+
+		//Replace all possible variables with their expressions that are used in the command context
+		pCodeContext->ReplaceAllVariables(pInterfaceObject);
+
+		//Print the first string-argument of the command
+		std::wcout << pContext->GetPartString(1) << std::endl;
+
+		//Return true to indicate that the command executed successfully.
+		//Returning false will cause the shell to stop script execution and show an error
+		return true;
+	}
+
+} g_oExampleVoidCommand;
+
+//Example result-type-command interface
+class IExampleResultCommandInterface : public IResultCommandInterface<dnyFloat> {
+public:
+	IExampleResultCommandInterface() {}
+
+	virtual bool CommandCallback(void* pCodeContext, void* pInterfaceObject)
+	{
+		ICodeContext* pContext = (ICodeContext*)pCodeContext;
+
+		//Replace all possible variables with their expressions that are used in the command context
+		pCodeContext->ReplaceAllVariables(pInterfaceObject);
+
+		//Access the first float-argument, multiplicate it by two, and then store it into the passed result variable of type float
+		IResultCommandInterface<dnyFloat>::SetResult(pContext->GetPartFloat(1) * 2);
+
+		//Return true to indicate that the command executed successfully.
+		//Returning false will cause the shell to stop script execution and show an error
+		return true;
+	}
+} g_oExampleResultCommand;
+
 plugininfo_s g_sPluginInfos = {
 	L"Plugin name",
 	L"1.0",
@@ -99,9 +180,55 @@ plugininfo_s g_sPluginInfos = {
 	L"Contact info",
 	L"Plugin description"
 };
+
+bool dnyAS_PluginLoad(dnyVersionInfo version, IShellPluginAPI* pInterfaceData, plugininfo_s* pPluginInfos)
+{
+	//Called when plugin gets loaded
+
+	if ((!pInterfaceData) || (!pPluginInfos))
+		return false;
+
+	//Check version
+	if (version != DNY_AS_PRODUCT_VERSION_W) {
+		return false;
+	}
+
+	//Store interface pointer
+	g_pShellPluginAPI = pInterfaceData;
+
+	//Store plugin infos
+	memcpy(pPluginInfos, &g_sPluginInfos, sizeof(plugininfo_s));
+
+	//Register example commands
+	g_pShellPluginAPI->Cmd_RegisterCommand(L"mycommand", &g_oExampleVoidCommand, CT_VOID);
+	g_pShellPluginAPI->Cmd_RegisterCommand(L"mycommand2", &g_oExampleResultCommand, CT_FLOAT);
+
+	return true;
+}
 ```
 
-The latter one is called when the plugin gets unloaded. There you can implement all cleanup stuff. 
+When the plugin is available, the example commands would be used as follows:
+
+```
+# Example of using mycommand
+mycommand "This will be printed";
+
+# Example of using mycommand2
+global fResultVar float;
+mycommand2 50 fResultVar; # fResultVar will then contain 100.0
+```
+
+The `dnyAS_PluginUnload` function is called when the plugin gets unloaded. Use it to free all resources, clean up memory, etc.
+
+```cpp
+void dnyAS_PluginUnload(void)
+{
+	//Called when plugin gets unloaded
+
+	g_pShellPluginAPI->Cmd_UnregisterCommand(L"mycommand");
+	g_pShellPluginAPI->Cmd_UnregisterCommand(L"mycommand2");
+}
+```
 
 Please refer to the demo plugin sourcecode in order to view a full documented example.
 

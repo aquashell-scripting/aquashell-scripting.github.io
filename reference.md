@@ -75,10 +75,28 @@ Pauses the main thread for N milliseconds
 sleep 1000; #Will pause the main thread for 1 second (= 1000 milliseconds)
 ```
 
+### bitop
+Performs either a bitwise OR, AND or XOR operation and stores it to the result var
+```aquashell
+bitop "or/and/xor" (10, 20, ...) resultIntVar;
+```
+
 ### gettickcount
 Stores the elapsed time in milliseconds since the operating system was started
 ```aquashell
 gettickcount "result int var";
+```
+
+### timestamp
+Stores the current system timestamp into the result var
+```aquashell
+timestamp resultIntVar;
+```
+
+### fmtdatetime
+Creates a formatted datetime string and stores it into the result var
+```aquashell
+fmtdatetime "format string" (opt:timestamp) resultStringVar;
 ```
 
 ### getsystemerror
@@ -118,21 +136,23 @@ The array plugin provides some basic functionality to work with arrays. It diffe
 ```aquashell
 array "array name" "data type" "initial size as positive number" (list of initial items) #Registers an array
 
-store_array_item "name of array" "positive index of array item" "target var"; #Stores the array item expression to the given variable of same type
+array_item_get "name of array" "positive index of array item" "target var"; #Stores the array item expression to the given variable of same type
 
-store_item_to_array "source variable" "array name" "positive index of array item to save to"; #Stores the expression of the variable to the specified array item
+array_item_get "source variable" "array name" "positive index of array item to save to"; #Stores the expression of the variable to the specified array item
 
-copy_array_item "source array name" "positive index" "target array name" "positive index"; #Copies one array value to another array item
+array_item_copy "source array name" "positive index" "target array name" "positive index"; #Copies one array value to another array item
 
-resize_array "array name" "new array size"; #Resizes the array with new dimension
+array_resize "array name" "new array size"; #Resizes the array with new dimension. Use 0 to reset the array
 
-item_insert "array name" "position to insert" "expression"; #Inserts the expression as a new item at the given position
+array_item_insert "array name" "position to insert" "expression"; #Inserts the expression as a new item at the given position
 
-item_append "array name" "expression"; #Appends the expression to the array
+array_item_append "array name" "expression"; #Appends the expression to the array
 
-item_remove "array name" "index"; #Removes the item at the given position
+array_item_remove "array name" "index"; #Removes the item at the given position
 
-free_array "array name"; #Removes the array and frees the memory
+array_clone "source array" "cloned array name"; # Clones the array into a new created array with the given name
+
+array_free "array name"; #Removes the array and frees the memory
 ```
 
 ### Auto
@@ -178,6 +198,10 @@ aut_sendkeystrokes "strokes" "shall simulate ctrl" "shall simulate shift" "shall
 
 aut_sendmousestrokes "strokes" "shall simulate ctrl" "shall simulate shift" "shall simulate alt" "operation result"; #Sends mouse strokes to the system. Also here you can specify ctrl, shift and alt and also an operation result var. Mouse strokes are only special tokens such as "\VM_LEFTDOWN;\VM_LEFTUP;"
 
+aut_keybdevent "virtual key code" "scan code" "flags"; #Uses keybd_event() WinAPI function to simulate key events
+
+aut_mouseevent "flags" "x" "y" "data"; #Uses mouse_event() WinAPI function to simulate mouse events
+
 aut_addkeyevent "name of function to call" "key number to hook into" "operation result"; #Add a keyboard hook. The function to be called is of following definition: function KeyboardEvent void(isdown bool, isshift bool, isctrl bool, isalt bool) {};
 
 aut_addmouseevent "name of function to call" "mouse number to hook into" "operation result"; #Add a mouse hook. The function to be called is of following definition: function MouseEvent void(isshift bool, isctrl bool, isalt bool) {}; Note it is only called for pressed event, not down or up
@@ -209,11 +233,15 @@ depends on your Windows system and settings
 ### Events
 The events plugin allows you to register events and then trigger them on any desired occassion.
 ```aquashell
-events.register "event name" "amount of arguments" "shall allow multiple handlers"; #Registers an event type. You need to specify the event name, a positive number that specifies the amount of arguments that a handler receives and also a bool flag if multiple handlers are allowed for that event
+event.register "event name" "amount of arguments" "shall allow multiple handlers"; #Registers an event type. You need to specify the event name, a positive number that specifies the amount of arguments that a handler receives and also a bool flag if multiple handlers are allowed for that event
 
-events.add "event name" "name of callback function"; #Associate an event handler function with a given registered event
+event.add "event name" "name of callback function"; #Associate an event handler function with a given registered event
 
-events.raise "event name" (list, of, arguments) "result var to store result"; #Raise an event and call the handler. You can pass arguments to the handler. The amount must match the count specified when registered the event. You can specify the name of a variable that shall recieve the function result or just void if storage of a result is not intended.
+event.exists "event name" "boolean result var"; #Stores a boolean value indicating whether the given event exists or not
+
+event.raise "event name" (list, of, arguments) "result var to store result"; #Raise an event and call the handler. You can pass arguments to the handler. The amount must match the count specified when registered the event. You can specify the name of a variable that shall recieve the function result or just void if storage of a result is not intended.
+
+event.release "event name"; #Removes the event and associated data
 ```
 
 ### FileIO
@@ -356,7 +384,7 @@ wnd_getpbrange "form handle" "bar name" "result var"; #Stores the max value in t
 
 wnd_getpbposition "form handle" "bar name" "result var"; #Stores the current position value in the result var
 
-wnd_spawnimagebox "form handle" "imagebox name" x y w h "image file"; #Adds a new imagebox to the form
+wnd_spawnimagebox "form handle" "imagebox name" x y w h "opt:initial image file"; #Adds a new imagebox to the form
 
 wnd_setimageboximage "form handle" "imagebox name" "image file"; #Sets the current image of the imagebox
 
@@ -457,12 +485,14 @@ s_ltrim "string variable"; #Performs a left-trim operation on that variable
 s_fmtescseq "string token" "result var"; #Writes the actual Unicode character in hexadecimal representation of the token to the result var. Example: "\53BD;" would convert the hexadecimal representation as character and store it
 ```
 
-### DateTime
-This plugin provides some date and time handling commands
+### Ini
+This plugin provides functionality to access INI configuration files
 ```aquashell
-timestamp "result int var"; # Stores the current system timestamp into the result var
+ini_read "path/to/file.ini" "section" "key" "result string variable"; #Stores the value of section.key into the result var
 
-fmtdatetime "format string" "opt:timestamp" "result string var"; Creates a formatted datetime string and stores it into the result var. Optionally you can provide a timestamp to perform the operation on.
+ini_write "path/to/file.ini" "section" "key" "expression"; #Writes the given expression into section.key. If it doesn't exist, then it will be created
+
+ini_delete "path/to/file.ini" "section" "key"; #Removes the key from the section
 ```
 
 ### IRC
