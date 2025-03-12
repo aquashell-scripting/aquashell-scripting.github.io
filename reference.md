@@ -324,15 +324,23 @@ wnd_setcompfont "form handle" "component type" "component name" "font name" w h 
 
 wnd_getcomptext "form handle" "component type" "component name" "result var"; #Gets a component text
 
+wnd_getcomphandle "form handle" "opt:component type" "opt:component name" "result var"; #Either get the handle of the form or an attached control to a form
+
+wnd_setcompstyle "form handle" "component type" "component name" "new style" "result var"; #Sets new component styles and stores the old styles in the result variable
+
 wnd_spawnlabel "form handle" "label name" x y w h "initial text"; #Adds a new label to the given form.
 
 wnd_spawnbutton "form handle" "button name" x y w h "button text"; #Adds a new button to a form. It is assumed that a callback function with following definition exists: function ButtonName_OnClick void() {};
 
 wnd_spawntextbox "form handle" "textbox name" x y w h "initial text"; #Adds a new textbox to the form. It is assumed that a callback function with following definition exists: function TextboxName_OnChange void(newText string) {};
 
+wnd_settextboxmultiline "form handle" "textbox name"; #Sets a textbox component to be multiline
+
 wnd_gettextboxtext "form handle" "textbox name" "result var"; #Stores the textbox text in the result var if found
 
 wnd_settextboxtext "form handle" "textbox name" "new text"; #Sets the text content of the given textbox if exists
+
+wnd_appendtextboxtext "form handle" "textbox name" "text to append"; Appends the text content to the given textbox in a new line
 
 wnd_spawncheckbox "form handle" "checkbox name" x y w h "initial text" "is checked"; #Adds a checkbox to the form
 
